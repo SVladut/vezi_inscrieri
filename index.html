@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Vezi Inscrieri</title>
+    <link rel="stylesheet" href="style-inscrieri.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-KyZXEAg3QhqLMpG8r+Knujsl5+5hb7U4i+H5gZJr+g2p4sKZJ/5nU8Vf8bVbg/ABx4qYPSryGJp5dM+Hs4z4Lw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+
+<div class="container">
+    <h2>Vezi Tabele din Baza de Date</h2>
+
+    <!-- 🔍 Filtrare -->
+    <input id="filterInput" type="text" placeholder="Caută după numele tabelului...">
+
+    <!-- 🔽 Sortare -->
+    <div class="sort-buttons">
+        <button class="submit-btn" onclick="sortAsc()">
+            Sortare <i class="fas fa-arrow-up"></i>
+        </button>
+        <button class="submit-btn" onclick="sortDesc()">
+            Sortare <i class="fas fa-arrow-down"></i>
+        </button>
+        <button class="submit-btn" onclick="exportTableToCSV('tabele.csv')">
+            Export <i class="fas fa-file-csv"></i>
+        </button>
+    </div>
+
+    <!-- 🧾 Tabel -->
+    <div class="table-responsive">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>Nume Tabel</th>
+                    <th>Număr Rânduri</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <button class="back-btn" onclick="window.history.back()">Înapoi</button>
+</div>
+
+<script>
+    let tableData = [];
+
+    // 1️⃣ Load data
+    function loadData() {
+        fetch("http://localhost:8081/vezi_inscrieri")
+            .then(response => response.json())
+            .then(data => {
+                tableData = data;
+                renderTable(data);
+            });
+    }
+
+    // 2️⃣ Render table
+    function renderTable(data) {
+        const tbody = document.querySelector("#data-table tbody");
+        tbody.innerHTML = "";
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${row.tableName}</td><td>${row.rowCount}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 3️⃣ Filtrare după nume
+    document.getElementById("filterInput").addEventListener("keyup", function () {
+        const value = this.value.toLowerCase();
+        const filtered = tableData.filter(row => row.tableName.toLowerCase().includes(value));
+        renderTable(filtered);
+    });
+
+    // 4️⃣ Sortare crescător / descrescător
+    function sortAsc() {
+        const sorted = [...tableData].sort((a, b) => a.rowCount - b.rowCount);
+        renderTable(sorted);
+    }
+
+    function sortDesc() {
+        const sorted = [...tableData].sort((a, b) => b.rowCount - a.rowCount);
+        renderTable(sorted);
+    }
+
+    // 5️⃣ Export CSV
+    function exportTableToCSV(filename) {
+        const csvRows = [];
+        const headers = ["CATEGORIE", "SPORTIVI INSCRISI"];
+        csvRows.push(headers.join(","));
+
+        tableData.forEach(row => {
+            csvRows.push(`${row.tableName},${row.rowCount}`);
+        });
+
+        const csvString = csvRows.join("\n");
+        const blob = new Blob([csvString], { type: "text/csv" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    // Load initial data
+    loadData();
+</script>
+
+</body>
+</html>
